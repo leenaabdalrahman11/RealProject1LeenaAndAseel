@@ -1,0 +1,1 @@
+/usr/bin/gcc -g CMakeFiles/GameMatch.dir/main.c.o CMakeFiles/GameMatch.dir/player.c.o CMakeFiles/GameMatch.dir/referee.c.o CMakeFiles/GameMatch.dir/graphics.c.o -o GameMatch 
