@@ -14,7 +14,7 @@ pid_t player_pids[NUM_PLAYERS];
 int ready_pipes[NUM_PLAYERS][2];
 
 int main(int argc, char** argv) {
-    XInitThreads();  // ✅ ضروري لتفادي مشاكل تعدد الخيوط في X11
+    XInitThreads();
 
     init_graphics(&argc, argv); // تهيئة OpenGL
     team1_player_efforts = mmap(NULL, 4 * sizeof(int), PROT_READ | PROT_WRITE,
@@ -53,24 +53,20 @@ int main(int argc, char** argv) {
         close(ready_pipes[i][0]);
     }
 
-    // تشغيل referee_process داخل fork منفصل
     pid_t referee_pid = fork();
     if (referee_pid == 0) {
         referee_process();
         exit(0);
     }
 
-    // تشغيل واجهة OpenGL (آخر شيء)
     start_graphics();
 
-    // بعد انتهاء واجهة الرسوميات
     for (int i = 0; i < NUM_PLAYERS; i++) {
         kill(player_pids[i], SIGKILL);
     }
     kill(referee_pid, SIGKILL);
     exit(0);
 
-    // الانتظار حتى ينتهي اللاعبون (في حال النافذة أغلقت)
     for (int i = 0; i < NUM_PLAYERS; i++) {
         wait(NULL);
     }

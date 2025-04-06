@@ -94,7 +94,6 @@ void timer(int value) {
     if (rope_position > 0.9f) rope_position = 0.9f;
     if (rope_position < -0.9f) rope_position = -0.9f;
 
-    // ✅ مهم جدًا: إعادة جدولة التايمر
     glutTimerFunc(1000, timer, 0);
 }
 
@@ -129,9 +128,7 @@ void update_single_player_effort(int player_id, int effort) {
         team2_player_efforts[player_id - 4] = effort;
     }
 
-//    printf("[Graphics] Player %d updated effort: %d\n", player_id, effort);
 
-    // ✅ نطلب إعادة رسم الشاشة مباشرة
     glutPostRedisplay();
 }
 

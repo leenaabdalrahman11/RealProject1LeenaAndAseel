@@ -1,31 +1,29 @@
 #include "common.h"
 #include "referee.h"
-#include <stdlib.h>  // لاستخدام qsort
+#include <stdlib.h>
 #include "graphics.h"
 
-// هيكل لتخزين بيانات اللاعب (مثل الجهد، الرقم)
 typedef struct {
     int player_id;
     int effort;
 } PlayerEffort;
 
-// دالة مقارنة لتحديد ترتيب اللاعبين حسب الجهد
 int compare_effort(const void *a, const void *b) {
     PlayerEffort *player_a = (PlayerEffort *)a;
     PlayerEffort *player_b = (PlayerEffort *)b;
-    return player_b->effort - player_a->effort; // ترتيب تنازلي (الأعلى جهدًا أولاً)
+    return player_b->effort - player_a->effort;
 }
 void referee_process() {
     printf("Referee started!\n");
-    signal(SIGINT, SIG_IGN); // تجاهل Ctrl+C
+    signal(SIGINT, SIG_IGN);
 
     int team1_score = 0, team2_score = 0;
     int round_count = 0;
-    int last_winner = -1;         // -1 = لا أحد، 0 = فريق 1، 1 = فريق 2
+    int last_winner = -1;
     int consecutive_wins = 0;
     int team1_effort = 0, team2_effort = 0;
 
-    time_t start_time = time(NULL); // بداية المباراة
+    time_t start_time = time(NULL);
 
     while (1) {
         printf("\n🏁 Round %d starts!\n", round_count + 1);
@@ -43,7 +41,7 @@ void referee_process() {
 
         printf("\n🔔 Round %d is in progress...\n", round_count + 1);
 
-        // مصفوفة لتخزين الجهود لكل اللاعبين
+
         PlayerEffort team1_efforts[TEAM_SIZE];
         PlayerEffort team2_efforts[TEAM_SIZE];
 
@@ -52,13 +50,12 @@ void referee_process() {
             printf("⏳ Waiting for players to report their effort...\n");
 
             for (int i = 0; i < NUM_PLAYERS; i++) {
-                kill(player_pids[i], SIGUSR1); // إرسال الإشارة
+                kill(player_pids[i], SIGUSR1);
                 sleep(2);
             }
 
-            sleep(1); // إعطاء اللاعبين وقت كافي للرد
+            sleep(1);
 
-            // قراءة الجهود من اللاعبين وتخزينها
             for (int i = 0; i < NUM_PLAYERS; i++) {
                 int effort = 0;
                 if (read(pipes[i][0], &effort, sizeof(int)) > 0) {
@@ -78,42 +75,34 @@ void referee_process() {
                         team2_effort += effort;
                     }
 
-                    // ✅ تحديث الجهد بصريًا مباشرة
                     update_single_player_effort(i, effort);
                 } else {
                     printf("⚠️ Player %d didn't respond!\n", i);
                 }
             }
-            // إرسال الجهود الفردية للرسم
             int t1[4], t2[4];
             for (int i = 0; i < 4; i++) {
                 t1[i] = team1_efforts[i].effort;
                 t2[i] = team2_efforts[i].effort;
             }
             update_player_efforts(t1, t2);
-            // ترتيب اللاعبين في الفريق الأول حسب الجهد
             qsort(team1_efforts, TEAM_SIZE, sizeof(PlayerEffort), compare_effort);
 
-            // ترتيب اللاعبين في الفريق الثاني حسب الجهد
             qsort(team2_efforts, TEAM_SIZE, sizeof(PlayerEffort), compare_effort);
 
-            // عرض الترتيب داخل الفريق الأول
             printf("\n🔝 Team 1 players ranked by effort:\n");
             for (int i = 0; i < TEAM_SIZE; i++) {
                 printf("Player %d: Effort = %d\n", team1_efforts[i].player_id, team1_efforts[i].effort);
             }
 
-            // عرض الترتيب داخل الفريق الثاني
             printf("\n🔝 Team 2 players ranked by effort:\n");
             for (int i = 0; i < TEAM_SIZE; i++) {
                 printf("Player %d: Effort = %d\n", team2_efforts[i].player_id, team2_efforts[i].effort);
             }
 
-            // عرض الجهود التراكمية حتى الآن
             printf("📊 Total Effort So Far - Team1: %d | Team2: %d\n", team1_effort, team2_effort);
         }
 
-        // تم انتهاء الجولة، نحدد من فاز ونحدث المتغيرات
         round_count++;
         if (team1_effort > team2_effort) {
             team1_score++;
@@ -157,10 +146,8 @@ void referee_process() {
         }
     }
 
-    // عرض النتيجة النهائية
     printf("\n🏆 Final Score: Team1 = %d | Team2 = %d\n", team1_score, team2_score);
 
-    // إنهاء اللاعبين
     for (int i = 0; i < NUM_PLAYERS; i++) {
         kill(player_pids[i], SIGKILL);
     }
